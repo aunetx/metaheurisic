@@ -36,6 +36,6 @@ Deux phases :
 
 # Algorithme génétique
 
-## Fonction de croisement
+## Fonction de croisement
 
 Bipartition à une frontière entre deux nœuds, et on échange les parties droites et gauches pour faire les deux enfants
