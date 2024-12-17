@@ -15,7 +15,7 @@ Questions :
 - voisins nécessairement solutions exactes ?
 - combien de voisins ?
 
-## Fonction d'évaluation
+## Fonction d'évaluation
 
 Prend une solution (exacte ou approché) et retourne un score.
 But de minimiser ce score.
@@ -28,7 +28,7 @@ Fonction d'évaluation pour solutions non-exactes :
 f: solution -> score
    [v1, v2, ..., vN] -> dist(v1, v2) + ... + dist(vN-1, vN) + e(v1) + ... + e(vN)
 
-## Minimisation
+## Minimisation
 
 Deux phases :
 - minimisation dans les solutions approchées
@@ -39,5 +39,3 @@ Deux phases :
 ## Fonction de croisement
 
 Bipartition à une frontière entre deux nœuds, et on échange les parties droites et gauches pour faire les deux enfants
-
-## 
