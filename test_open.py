@@ -21,3 +21,5 @@ for city_num in instance:
     ax2.plot([city["wstart"], city["wend"]], [city_num, city_num], lw=4)
 
 fig.tight_layout()
+
+# %%
