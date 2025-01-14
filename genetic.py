@@ -122,10 +122,10 @@ class Agent:
 
 fig, (ax1, ax2, ax3) = plt.subplots(3, figsize=(8, 16), sharex=True)
 
-instance = charger_instance("data/inst2")
+instance = charger_instance("data/inst3")
 dist_mat = compute_dist_mat(instance)
 
-N_agents = 70
+N_agents = 100
 
 ratio_parents = 0.3
 ratio_meilleurs_scores_parents = 0.2
@@ -145,11 +145,21 @@ if not continuer:
     n_penalites = [min(agent.n_penalites for agent in agents)]
 
 ax1.scatter(
-    [0] * N_agents, [agent.n_penalites for agent in agents], c="black", marker=".", alpha=0.4
+    [agent.iteration for agent in agents],
+    [agent.n_penalites for agent in agents],
+    c="black",
+    marker=".",
+    alpha=0.4,
 )
-ax2.scatter([0] * N_agents, [agent.score for agent in agents], c="black", marker=".", alpha=0.05)
+ax2.scatter(
+    [agent.iteration for agent in agents],
+    [agent.score for agent in agents],
+    c="black",
+    marker=".",
+    alpha=0.05,
+)
 
-N_iteration = 6000
+N_iteration = 4000
 for i in range(1, N_iteration):
     print(f"{i} / {N_iteration}", end="\r")
 
@@ -177,10 +187,18 @@ for i in range(1, N_iteration):
     n_penalites.append(min(agent.n_penalites for agent in agents))
 
     ax1.scatter(
-        [i] * N_agents, [agent.n_penalites for agent in agents], c="black", marker=".", alpha=0.4
+        [agent.iteration for agent in agents],
+        [agent.n_penalites for agent in agents],
+        c="black",
+        marker=".",
+        alpha=0.4,
     )
     ax2.scatter(
-        [i] * N_agents, [agent.score for agent in agents], c="black", marker=".", alpha=0.05
+        [agent.iteration for agent in agents],
+        [agent.score for agent in agents],
+        c="black",
+        marker=".",
+        alpha=0.05,
     )
 
 
