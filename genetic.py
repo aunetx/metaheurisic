@@ -6,19 +6,18 @@ import math
 import copy
 
 from utilitaires import *
-import scoreEtudiant
 
 # %%
 
 
 def mutation_echange(parcours, p=0.1):
     """
-    Échange deux villes du parcours au hasard (sauf la première) 
+    Échange deux villes du parcours au hasard (sauf la première)
     avec une probabilité p.
     """
     if np.random.rand() > p:
         return parcours
-    
+
     i1 = np.random.randint(1, len(parcours))
     i2 = np.random.randint(1, len(parcours))
     while i2 == i1:
@@ -47,12 +46,22 @@ def mutation_insertion(parcours, p=0.1):
     return nouveau_parcours
 
 
-def act_erreur(erreur, iteration):
-    return erreur
+def selectionner_tranche(agents, n_meilleurs_scores, n_meilleurs_penalites, n_hasard):
+    if n_meilleurs_scores > 0:
+        agents = sorted(agents, key=lambda agent: agent.score)
+    meilleurs_scores = agents[:n_meilleurs_scores]
+    agents = agents[n_meilleurs_scores:]
 
+    if n_meilleurs_penalites > 0:
+        agents = sorted(agents, key=lambda agent: agent.n_penalites)
+    meilleurs_penalites = agents[:n_meilleurs_penalites]
+    agents = agents[n_meilleurs_penalites:]
 
-def trier_agents(agents):
-    return sorted(agents, key=lambda agent: agent.score)
+    probabilites = np.array([1 / agent.score**2 for agent in agents])
+    probabilites /= np.sum(probabilites)
+    hasard = list(np.random.choice(agents, size=n_hasard, replace=False, p=probabilites))
+
+    return meilleurs_scores + meilleurs_penalites + hasard
 
 
 class Agent:
@@ -69,40 +78,38 @@ class Agent:
         if parcours:
             self.parcours = parcours
         else:
-            self.parcours = np.random.permutation(np.arange(1, len(self.instance) + 1)).tolist()
-        self.recalculer_distance()
-        self.recalculer_score()
+            self.parcours = [1] + np.random.permutation(
+                np.arange(2, len(self.instance) + 1)
+            ).tolist()
+        self.reevaluer()
 
     def act_erreur(self, erreur):
-        return erreur * self.iteration
+        return 1000 + erreur * self.iteration
 
     def iterer(self):
         self.iteration += 1
+        self.reevaluer()
         return self
 
-    def recalculer_distance(self):
-        self.distance = evaluation(
-            self.instance, self.dist_mat, self.parcours, lambda x: np.inf if x != 0 else 0
-        )
-        return self
-
-    def recalculer_score(self):
-        self.score = evaluation(
+    def reevaluer(self):
+        distance, score, n_penalites = evaluation(
             self.instance, self.dist_mat, self.parcours, lambda x: self.act_erreur(x)
         )
+
+        self.score = score
+        self.n_penalites = n_penalites
+        self.distance = distance if n_penalites == 0 else np.inf
+
         return self
 
     def muter(self):
-        self.parcours = mutation_echange(self.parcours,self.p_mutation)
-        self.parcours = mutation_insertion(self.parcours,self.p_mutation)
+        self.parcours = mutation_echange(self.parcours, self.p_mutation)
+        self.parcours = mutation_insertion(self.parcours, self.p_mutation)
         self.iterer()
-        self.recalculer_distance()
-        self.recalculer_score()
         return self
 
     def enfanter(self):
         enfant = self.copier().iterer()
-        enfant.recalculer_score()
         return enfant
 
     def copier(self):
@@ -111,58 +118,89 @@ class Agent:
 
 # %%
 
+fig, (ax1, ax2, ax3) = plt.subplots(3, figsize=(8, 16), sharex=True)
+
 instance = charger_instance("data/inst1")
 dist_mat = compute_dist_mat(instance)
 
 N_agents = 300
-garder_n_parents = 50
-agents = trier_agents(Agent(instance, dist_mat,p_mutation=0.2) for i in range(N_agents))
+
+garder_n_parents = 70
+garder_n_meilleurs_scores_parents = 20
+garder_n_meilleurs_penalites_parents = 10
+garder_n_autres_parents = (
+    garder_n_parents - garder_n_meilleurs_scores_parents - garder_n_meilleurs_penalites_parents
+)
+
+garder_n_enfants = N_agents - garder_n_parents
+garder_n_meilleurs_scores_enfants = 50
+garder_n_meilleurs_penalites_enfants = 25
+garder_n_autres_enfants = (
+    garder_n_enfants - garder_n_meilleurs_scores_enfants - garder_n_meilleurs_penalites_enfants
+)
+
+agents = [Agent(instance, dist_mat, p_mutation=0.65) for i in range(N_agents)]
 
 scores = [min(agent.score for agent in agents)]
 distances = [min(agent.distance for agent in agents)]
+n_penalites = [min(agent.n_penalites for agent in agents)]
 
-N_iteration = 200
-for i in range(N_iteration):
-    parents = [agent.enfanter() for agent in agents]
+ax1.scatter(
+    [0] * N_agents, [agent.n_penalites for agent in agents], c="black", marker=".", alpha=0.4
+)
+ax2.scatter([0] * N_agents, [agent.score for agent in agents], c="black", marker=".", alpha=0.05)
 
-    for agent in agents:
-        agent.muter()
-    enfants = trier_agents(agents)
+N_iteration = 250
+for i in range(1, N_iteration):
+    print(f"{i} / {N_iteration}", end="\r")
 
-    agents = trier_agents(parents[:garder_n_parents] + enfants[:-garder_n_parents])
+    parents = [agent.copier().iterer() for agent in agents]
+    enfants = [agent.copier().muter() for agent in agents]
+
+    parents_selectionnes = selectionner_tranche(
+        parents,
+        garder_n_meilleurs_scores_parents,
+        garder_n_meilleurs_penalites_parents,
+        garder_n_autres_parents,
+    )
+    enfants_selectionnes = selectionner_tranche(
+        enfants,
+        garder_n_meilleurs_scores_enfants,
+        garder_n_meilleurs_penalites_enfants,
+        garder_n_autres_enfants,
+    )
+
+    agents = parents_selectionnes + enfants_selectionnes
+    assert len(agents) == N_agents
 
     scores.append(min(agent.score for agent in agents))
     distances.append(min(agent.distance for agent in agents))
+    n_penalites.append(min(agent.n_penalites for agent in agents))
+
+    ax1.scatter(
+        [i] * N_agents, [agent.n_penalites for agent in agents], c="black", marker=".", alpha=0.4
+    )
+    ax2.scatter(
+        [i] * N_agents, [agent.score for agent in agents], c="black", marker=".", alpha=0.05
+    )
 
 
-plt.plot(scores, c="red")
-# plt.twinx()
-# plt.plot(distances, c="black", ls="--")
+ax1.set_ylim([0, None])
+ax1.set_ylabel("N pénalités")
+ax2.set_ylabel("Scores")
+ax2.set_yscale(("log"))
 
+ax3.plot(scores, c="red")
+ax3.set_ylabel("Meilleur score")
+ax3.set_xlabel("Itération")
+ax3t = ax3.twinx()
+ax3t.plot(n_penalites, c="black", ls="--")
+ax3t.set_ylabel("Meilleure pénalité")
 
-
-# %%
-
-N_iteration = 10000
-scores = []
-scores = [evaluation(instance, dist_mat, parcours, lambda x: act_erreur(x, i))]
-distances = [evaluation(instance, dist_mat, parcours)]
-
-for i in range(N_iteration):
-    nouveau_parcours = mutation_echange(parcours)
-    nouveau_parcours = mutation_insertion(parcours)
-    nouveau_score = evaluation(instance, dist_mat, nouveau_parcours, lambda x: act_erreur(x, i))
-
-    if nouveau_score < min(scores[-10:]):
-        parcours = nouveau_parcours
-        scores.append(nouveau_score)
-        distances.append(evaluation(instance, dist_mat, nouveau_parcours))
-
-plt.plot(scores, c="red")
-plt.twinx()
-plt.plot(distances, c="black", ls="--")
-
-print(min(distances))
+fig.tight_layout()
 
 
 # %%
+
+meilleur_agent = sorted(agents, key=lambda agent: agent.score)[0]
+meilleur_agent.score
