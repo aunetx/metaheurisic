@@ -46,7 +46,11 @@ def mutation_insertion(parcours, p=0.1):
     return nouveau_parcours
 
 
-def selectionner_tranche(agents, n_meilleurs_scores, n_meilleurs_penalites, n_hasard):
+def selectionner_tranche(agents, n_agents, ratio_meilleurs_scores, ratio_meilleurs_penalites):
+    n_meilleurs_scores = int(n_agents * ratio_meilleurs_scores)
+    n_meilleurs_penalites = int(n_agents * ratio_meilleurs_penalites)
+    n_hasard = n_agents - n_meilleurs_scores - n_meilleurs_penalites
+
     if n_meilleurs_scores > 0:
         agents = sorted(agents, key=lambda agent: agent.score)
     meilleurs_scores = agents[:n_meilleurs_scores]
@@ -68,12 +72,12 @@ class Agent:
     score = 0
     distance = 0
     iteration = 0
-    p_mutation = 0.1
+    p_mutation_echange = 0.5
 
-    def __init__(self, instance, dist_mat, parcours=None, p_mutation=0.1):
+    def __init__(self, instance, dist_mat, parcours=None, p_mutation_echange=0.5):
         self.instance = instance
         self.dist_mat = dist_mat
-        self.p_mutation = p_mutation
+        self.p_mutation_echange = p_mutation_echange
 
         if parcours:
             self.parcours = parcours
@@ -103,71 +107,66 @@ class Agent:
         return self
 
     def muter(self):
-        self.parcours = mutation_echange(self.parcours, self.p_mutation)
-        self.parcours = mutation_insertion(self.parcours, self.p_mutation)
+        if np.random.rand() > self.p_mutation_echange:
+            self.parcours = mutation_echange(self.parcours, 1)
+        else:
+            self.parcours = mutation_insertion(self.parcours, 1)
         self.iterer()
         return self
 
-    def enfanter(self):
-        enfant = self.copier().iterer()
-        return enfant
-
     def copier(self):
-        return copy.deepcopy(self)
+        return copy.copy(self)
 
 
 # %%
 
 fig, (ax1, ax2, ax3) = plt.subplots(3, figsize=(8, 16), sharex=True)
 
-instance = charger_instance("data/inst1")
+instance = charger_instance("data/inst2")
 dist_mat = compute_dist_mat(instance)
 
-N_agents = 300
+N_agents = 70
 
-garder_n_parents = 70
-garder_n_meilleurs_scores_parents = 20
-garder_n_meilleurs_penalites_parents = 10
-garder_n_autres_parents = (
-    garder_n_parents - garder_n_meilleurs_scores_parents - garder_n_meilleurs_penalites_parents
-)
+ratio_parents = 0.3
+ratio_meilleurs_scores_parents = 0.2
+ratio_meilleurs_penalites_parents = 0.1
+ratio_meilleurs_scores_enfants = 0.2
+ratio_meilleurs_penalites_enfants = 0.1
 
-garder_n_enfants = N_agents - garder_n_parents
-garder_n_meilleurs_scores_enfants = 50
-garder_n_meilleurs_penalites_enfants = 25
-garder_n_autres_enfants = (
-    garder_n_enfants - garder_n_meilleurs_scores_enfants - garder_n_meilleurs_penalites_enfants
-)
+n_parents = int(N_agents * ratio_parents)
+n_enfants = N_agents - n_parents
 
-agents = [Agent(instance, dist_mat, p_mutation=0.65) for i in range(N_agents)]
+continuer = False
+if not continuer:
+    agents = [Agent(instance, dist_mat) for i in range(N_agents)]
 
-scores = [min(agent.score for agent in agents)]
-distances = [min(agent.distance for agent in agents)]
-n_penalites = [min(agent.n_penalites for agent in agents)]
+    scores = [min(agent.score for agent in agents)]
+    distances = [min(agent.distance for agent in agents)]
+    n_penalites = [min(agent.n_penalites for agent in agents)]
 
 ax1.scatter(
     [0] * N_agents, [agent.n_penalites for agent in agents], c="black", marker=".", alpha=0.4
 )
 ax2.scatter([0] * N_agents, [agent.score for agent in agents], c="black", marker=".", alpha=0.05)
 
-N_iteration = 250
+N_iteration = 6000
 for i in range(1, N_iteration):
     print(f"{i} / {N_iteration}", end="\r")
 
     parents = [agent.copier().iterer() for agent in agents]
-    enfants = [agent.copier().muter() for agent in agents]
+    enfants = [agent.muter() for agent in agents]
 
     parents_selectionnes = selectionner_tranche(
         parents,
-        garder_n_meilleurs_scores_parents,
-        garder_n_meilleurs_penalites_parents,
-        garder_n_autres_parents,
+        n_parents,
+        ratio_meilleurs_scores_parents,
+        ratio_meilleurs_penalites_parents,
     )
     enfants_selectionnes = selectionner_tranche(
         enfants,
-        garder_n_meilleurs_scores_enfants,
-        garder_n_meilleurs_penalites_enfants,
-        garder_n_autres_enfants,
+        n_enfants,
+        ratio_meilleurs_scores_enfants,
+        ratio_meilleurs_penalites_enfants,
     )
 
     agents = parents_selectionnes + enfants_selectionnes
@@ -194,8 +193,8 @@ ax3.plot(scores, c="red")
 ax3.set_ylabel("Meilleur score")
 ax3.set_xlabel("Itération")
 ax3t = ax3.twinx()
-ax3t.plot(n_penalites, c="black", ls="--")
-ax3t.set_ylabel("Meilleure pénalité")
+ax3t.plot(distances, c="black", ls="--")
+ax3t.set_ylabel("Meilleure distance")
 
 fig.tight_layout()
 
