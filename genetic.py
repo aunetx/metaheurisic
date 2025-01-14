@@ -37,7 +37,7 @@ def mutation_insertion(parcours, p=0.1):
     """
     if np.random.rand() > p:
         return parcours
-    
+
     i_ville = np.random.randint(1, len(parcours))
     i_insertion = np.random.randint(1, len(parcours))
 
@@ -65,6 +65,7 @@ class Agent:
         self.instance = instance
         self.dist_mat = dist_mat
         self.p_mutation = p_mutation
+
         if parcours:
             self.parcours = parcours
         else:
@@ -139,6 +140,7 @@ plt.plot(scores, c="red")
 # plt.plot(distances, c="black", ls="--")
 
 
+
 # %%
 
 N_iteration = 10000
@@ -161,5 +163,6 @@ plt.twinx()
 plt.plot(distances, c="black", ls="--")
 
 print(min(distances))
+
 
 # %%
