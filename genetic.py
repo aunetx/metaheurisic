@@ -11,11 +11,14 @@ import scoreEtudiant
 # %%
 
 
-def mutation_echange(parcours):
+def mutation_echange(parcours, p=0.1):
     """
-    Échange deux villes du parcours au hasard (sauf la première).
+    Échange deux villes du parcours au hasard (sauf la première) 
+    avec une probabilité p.
     """
-
+    if np.random.rand() > p:
+        return parcours
+    
     i1 = np.random.randint(1, len(parcours))
     i2 = np.random.randint(1, len(parcours))
     while i2 == i1:
@@ -27,11 +30,14 @@ def mutation_echange(parcours):
     return nouveau_parcours
 
 
-def mutation_insertion(parcours):
+def mutation_insertion(parcours, p=0.1):
     """
     Choisit une ville au hasard (sauf la première), et l'insert à une place
-    au hasard sur le parcours (sauf au départ).
+    au hasard sur le parcours (sauf au départ) avec une probabilité p.
     """
+    if np.random.rand() > p:
+        return parcours
+
     i_ville = np.random.randint(1, len(parcours))
     i_insertion = np.random.randint(1, len(parcours))
 
@@ -53,10 +59,13 @@ class Agent:
     score = 0
     distance = 0
     iteration = 0
+    p_mutation = 0.1
 
-    def __init__(self, instance, dist_mat, parcours=None):
+    def __init__(self, instance, dist_mat, parcours=None, p_mutation=0.1):
         self.instance = instance
         self.dist_mat = dist_mat
+        self.p_mutation = p_mutation
+
         if parcours:
             self.parcours = parcours
         else:
@@ -84,8 +93,8 @@ class Agent:
         return self
 
     def muter(self):
-        self.parcours = mutation_echange(self.parcours)
-        self.parcours = mutation_insertion(self.parcours)
+        self.parcours = mutation_echange(self.parcours,self.p_mutation)
+        self.parcours = mutation_insertion(self.parcours,self.p_mutation)
         self.iterer()
         self.recalculer_distance()
         self.recalculer_score()
@@ -105,14 +114,14 @@ class Agent:
 instance = charger_instance("data/inst1")
 dist_mat = compute_dist_mat(instance)
 
-N_agents = 30
-garder_n_parents = 7
-agents = trier_agents(Agent(instance, dist_mat) for i in range(N_agents))
+N_agents = 300
+garder_n_parents = 50
+agents = trier_agents(Agent(instance, dist_mat,p_mutation=0.2) for i in range(N_agents))
 
 scores = [min(agent.score for agent in agents)]
 distances = [min(agent.distance for agent in agents)]
 
-N_iteration = 1000
+N_iteration = 200
 for i in range(N_iteration):
     parents = [agent.enfanter() for agent in agents]
 
@@ -127,8 +136,9 @@ for i in range(N_iteration):
 
 
 plt.plot(scores, c="red")
-plt.twinx()
-plt.plot(distances, c="black", ls="--")
+# plt.twinx()
+# plt.plot(distances, c="black", ls="--")
+
 
 
 # %%
@@ -153,3 +163,6 @@ plt.twinx()
 plt.plot(distances, c="black", ls="--")
 
 print(min(distances))
+
+
+# %%
