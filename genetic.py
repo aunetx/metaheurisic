@@ -125,7 +125,7 @@ fig, (ax1, ax2, ax3) = plt.subplots(3, figsize=(8, 16), sharex=True)
 instance = charger_instance("data/inst3")
 dist_mat = compute_dist_mat(instance)
 
-N_agents = 100
+N_agents = 70
 
 ratio_parents = 0.3
 ratio_meilleurs_scores_parents = 0.2
@@ -159,7 +159,7 @@ ax2.scatter(
     alpha=0.05,
 )
 
-N_iteration = 4000
+N_iteration = 60000
 for i in range(1, N_iteration):
     print(f"{i} / {N_iteration}", end="\r")
 
