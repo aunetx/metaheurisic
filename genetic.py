@@ -96,13 +96,9 @@ class Agent:
         return self
 
     def reevaluer(self):
-        distance, score, n_penalites = evaluation(
+        self.distance, self.score, self.n_penalites = evaluation(
             self.instance, self.dist_mat, self.parcours, lambda x: self.act_erreur(x)
         )
-
-        self.score = score
-        self.n_penalites = n_penalites
-        self.distance = distance if n_penalites == 0 else np.inf
 
         return self
 
@@ -113,6 +109,23 @@ class Agent:
             self.parcours = mutation_insertion(self.parcours, 1)
         self.iterer()
         return self
+
+    def afficher_parcours(self):
+        import igraph as ig
+
+        coords = [(self.instance[i]["x"], self.instance[i]["y"]) for i in self.instance]
+        p = self.parcours
+        v = [(p[i] - 1, p[i + 1] - 1) for i in range(len(p) - 1)] + [(p[-1] - 1, p[0] - 1)]
+
+        g = ig.Graph()
+        g.add_vertices(self.parcours)
+        g.add_edges(v)
+
+        fig, ax = plt.subplots()
+
+        g.vs["label"] = g.vs["name"]
+        g.vs["label_size"] = 7
+        ig.plot(g, target=ax, layout=coords)
 
     def copier(self):
         return copy.copy(self)
@@ -220,4 +233,5 @@ fig.tight_layout()
 # %%
 
 meilleur_agent = sorted(agents, key=lambda agent: agent.score)[0]
-meilleur_agent.score
+print(meilleur_agent.parcours)
+meilleur_agent.afficher_parcours()

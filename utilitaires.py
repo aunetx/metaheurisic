@@ -109,4 +109,4 @@ def evaluation(instance, dist_mat, parcours, g=lambda x: 0):
             penalite += g(erreur)
             n_penalites += 1
 
-    return distance, distance + penalite, n_penalites
+    return distance if n_penalites == 0 else np.inf, distance + penalite, n_penalites
