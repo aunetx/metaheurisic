@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import math
 import copy
 import igraph
+from time import time
 
 from utilitaires import *
 import scoreEtudiant
@@ -160,11 +161,6 @@ class Agent:
         self.recalculer_score()
         return self
 
-    def enfanter(self):
-        enfant = self.copier().iterer()
-        enfant.recalculer_score()
-        return enfant
-
     def copier(self):
         return copy.deepcopy(self)
 
@@ -172,7 +168,8 @@ class Agent:
 # %%
 # Run
 
-
+total_time = 0
+start_time = time()
 instance = charger_instance("data/inst2")
 dist_mat = compute_dist_mat(instance)
 
@@ -187,14 +184,14 @@ n_parents = int(N_agents * ratio_parents)
 n_enfants = N_agents - n_parents
 
 N_iteration = 1500
-continuer = True
+continuer = False
 
 fig, (ax1, ax2, ax3) = plt.subplots(3, figsize=(8, 15), sharex=True)
 
 if not continuer:
     
-    
-    agents = [Agent(instance, dist_mat, p_mutation_echange=0, pm_mutation_insertion=0.1) for i in range(N_agents)]
+    total_time = 0
+    agents = [Agent(instance, dist_mat, p_mutation_echange=0.35, pm_mutation_insertion=0.35) for i in range(N_agents)]
 
     scores = [min(agent.score for agent in agents)]
     distances = [min(agent.distance for agent in agents)]
@@ -256,6 +253,9 @@ for i in range(1, N_iteration):
     )
 
 
+run_time = time() - start_time
+total_time += run_time
+
 ax1.set_ylim([0, None])
 ax1.set_ylabel("N pénalités")
 ax2.set_ylabel("Scores")
@@ -275,6 +275,7 @@ fig.tight_layout()
 # %%
 #End
 meilleur_agent = sorted(agents, key=lambda agent: agent.score)[0]
+print(f"Temps d'exécution total du run : {run_time:.2f} s")
 print("Meilleur score:", meilleur_agent.score)
 print("parcours:", meilleur_agent.parcours)
 meilleur_agent.afficher_parcours()
