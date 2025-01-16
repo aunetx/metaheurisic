@@ -10,14 +10,10 @@ from utilitaires import *
 # %%
 
 
-def mutation_echange(parcours, p=0.1):
+def mutation_echange(parcours):
     """
-    Échange deux villes du parcours au hasard (sauf la première)
-    avec une probabilité p.
+    Échange deux villes du parcours au hasard (sauf la première).
     """
-    if np.random.rand() > p:
-        return parcours
-
     i1 = np.random.randint(1, len(parcours))
     i2 = np.random.randint(1, len(parcours))
     while i2 == i1:
@@ -29,14 +25,11 @@ def mutation_echange(parcours, p=0.1):
     return nouveau_parcours
 
 
-def mutation_insertion(parcours, p=0.1):
+def mutation_insertion(parcours):
     """
     Choisit une ville au hasard (sauf la première), et l'insert à une place
-    au hasard sur le parcours (sauf au départ) avec une probabilité p.
+    au hasard sur le parcours (sauf au départ).
     """
-    if np.random.rand() > p:
-        return parcours
-
     i_ville = np.random.randint(1, len(parcours))
     i_insertion = np.random.randint(1, len(parcours))
 
@@ -104,9 +97,9 @@ class Agent:
 
     def muter(self):
         if np.random.rand() > self.p_mutation_echange:
-            self.parcours = mutation_echange(self.parcours, 1)
+            self.parcours = mutation_echange(self.parcours)
         else:
-            self.parcours = mutation_insertion(self.parcours, 1)
+            self.parcours = mutation_insertion(self.parcours)
         self.iterer()
         return self
 
