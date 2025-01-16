@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import math
 import copy
+from tqdm import tqdm
 
 from utilitaires import *
 
@@ -65,11 +66,13 @@ class Agent:
     score = 0
     distance = 0
     iteration = 0
+    p_mutation = 0.8
     p_mutation_echange = 0.5
 
-    def __init__(self, instance, dist_mat, parcours=None, p_mutation_echange=0.5):
+    def __init__(self, instance, dist_mat, parcours=None, p_mutation=0.8, p_mutation_echange=0.5):
         self.instance = instance
         self.dist_mat = dist_mat
+        self.p_mutation = p_mutation
         self.p_mutation_echange = p_mutation_echange
 
         if parcours:
@@ -96,10 +99,11 @@ class Agent:
         return self
 
     def muter(self):
-        if np.random.rand() > self.p_mutation_echange:
-            self.parcours = mutation_echange(self.parcours)
-        else:
-            self.parcours = mutation_insertion(self.parcours)
+        if np.random.rand() < self.p_mutation:
+            if np.random.rand() < self.p_mutation_echange:
+                self.parcours = mutation_echange(self.parcours)
+            else:
+                self.parcours = mutation_insertion(self.parcours)
         self.iterer()
         return self
 
@@ -128,7 +132,7 @@ class Agent:
 
 fig, (ax1, ax2, ax3) = plt.subplots(3, figsize=(8, 16), sharex=True)
 
-instance = charger_instance("data/inst3")
+instance = charger_instance("data/inst2")
 dist_mat = compute_dist_mat(instance)
 
 N_agents = 70
@@ -146,9 +150,10 @@ continuer = False
 if not continuer:
     agents = [Agent(instance, dist_mat) for i in range(N_agents)]
 
-    scores = [min(agent.score for agent in agents)]
-    distances = [min(agent.distance for agent in agents)]
-    n_penalites = [min(agent.n_penalites for agent in agents)]
+    iterations = [[agent.iteration for agent in agents]]
+    scores = [[agent.score for agent in agents]]
+    distances = [[agent.distance for agent in agents]]
+    n_penalites = [[agent.n_penalites for agent in agents]]
 
 ax1.scatter(
     [agent.iteration for agent in agents],
@@ -165,10 +170,9 @@ ax2.scatter(
     alpha=0.05,
 )
 
-N_iteration = 60000
-for i in range(1, N_iteration):
-    print(f"{i} / {N_iteration}", end="\r")
-
+N_iteration = 4000
+tqdm_range = tqdm(range(1, N_iteration))
+for i in tqdm_range:
     parents = [agent.copier().iterer() for agent in agents]
     enfants = [agent.muter() for agent in agents]
 
@@ -188,36 +192,36 @@ for i in range(1, N_iteration):
     agents = parents_selectionnes + enfants_selectionnes
     assert len(agents) == N_agents
 
-    scores.append(min(agent.score for agent in agents))
-    distances.append(min(agent.distance for agent in agents))
-    n_penalites.append(min(agent.n_penalites for agent in agents))
+    iterations.append([agent.iteration for agent in agents])
+    scores.append([agent.score for agent in agents])
+    distances.append([agent.distance for agent in agents])
+    n_penalites.append([agent.n_penalites for agent in agents])
 
-    ax1.scatter(
-        [agent.iteration for agent in agents],
-        [agent.n_penalites for agent in agents],
-        c="black",
-        marker=".",
-        alpha=0.4,
-    )
-    ax2.scatter(
-        [agent.iteration for agent in agents],
-        [agent.score for agent in agents],
-        c="black",
-        marker=".",
-        alpha=0.05,
-    )
-
-
+ax1.scatter(
+    iterations,
+    n_penalites,
+    c="black",
+    marker=".",
+    alpha=0.4,
+)
 ax1.set_ylim([0, None])
 ax1.set_ylabel("N pénalités")
+
+ax2.scatter(
+    iterations,
+    scores,
+    c="black",
+    marker=".",
+    alpha=0.05,
+)
 ax2.set_ylabel("Scores")
 ax2.set_yscale(("log"))
 
-ax3.plot(scores, c="red")
+ax3.plot([min(score) for score in scores], c="red")
 ax3.set_ylabel("Meilleur score")
 ax3.set_xlabel("Itération")
 ax3t = ax3.twinx()
-ax3t.plot(distances, c="black", ls="--")
+ax3t.plot([min(distance) for distance in distances], c="black", ls="--")
 ax3t.set_ylabel("Meilleure distance")
 
 fig.tight_layout()
