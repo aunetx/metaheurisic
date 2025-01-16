@@ -195,11 +195,14 @@ class Algorithme:
         self.n_penalites.append([agent.n_penalites for agent in self.agents])
 
     def lancer_simulation(self, N_iterations):
-        fig, (ax1, ax2, ax3) = plt.subplots(3, figsize=(8, 16), sharex=True)
-        ax3t = ax3.twinx()
-
         for i in tqdm(range(1, N_iterations + 1)):
             algo.iterer()
+
+        self.afficher_simulation()
+
+    def afficher_simulation(self):
+        fig, (ax1, ax2, ax3) = plt.subplots(3, figsize=(8, 16), sharex=True)
+        ax3t = ax3.twinx()
 
         ax1.scatter(
             algo.iterations,
