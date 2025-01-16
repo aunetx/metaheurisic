@@ -130,102 +130,121 @@ class Agent:
 
 # %%
 
-fig, (ax1, ax2, ax3) = plt.subplots(3, figsize=(8, 16), sharex=True)
+
+class Algorithme:
+    def __init__(
+        self,
+        instance,
+        dist_mat,
+        N_agents,
+        p_mutation=0.8,
+        p_mutation_echange=0.5,
+        ratio_parents=0.3,
+        ratio_meilleurs_scores_parents=0.2,
+        ratio_meilleurs_penalites_parents=0.1,
+        ratio_meilleurs_scores_enfants=0.2,
+        ratio_meilleurs_penalites_enfants=0.1,
+    ):
+        self.instance = instance
+        self.dist_mat = dist_mat
+
+        self.N_agents = N_agents
+
+        self.ratio_parents = ratio_parents
+        self.ratio_meilleurs_scores_parents = ratio_meilleurs_scores_parents
+        self.ratio_meilleurs_penalites_parents = ratio_meilleurs_penalites_parents
+        self.ratio_meilleurs_scores_enfants = ratio_meilleurs_scores_enfants
+        self.ratio_meilleurs_penalites_enfants = ratio_meilleurs_penalites_enfants
+
+        self.n_parents = int(self.N_agents * self.ratio_parents)
+        self.n_enfants = self.N_agents - self.n_parents
+
+        self.agents = [
+            Agent(instance, dist_mat, p_mutation=p_mutation, p_mutation_echange=p_mutation_echange)
+            for i in range(N_agents)
+        ]
+
+        self.iterations = [[agent.iteration for agent in self.agents]]
+        self.scores = [[agent.score for agent in self.agents]]
+        self.distances = [[agent.distance for agent in self.agents]]
+        self.n_penalites = [[agent.n_penalites for agent in self.agents]]
+
+    def iterer(self):
+        parents = [agent.copier().iterer() for agent in self.agents]
+        enfants = [agent.muter() for agent in self.agents]
+
+        parents_selectionnes = selectionner_tranche(
+            parents,
+            self.n_parents,
+            self.ratio_meilleurs_scores_parents,
+            self.ratio_meilleurs_penalites_parents,
+        )
+        enfants_selectionnes = selectionner_tranche(
+            enfants,
+            self.n_enfants,
+            self.ratio_meilleurs_scores_enfants,
+            self.ratio_meilleurs_penalites_enfants,
+        )
+
+        self.agents = parents_selectionnes + enfants_selectionnes
+        assert len(self.agents) == self.N_agents
+
+        self.iterations.append([agent.iteration for agent in self.agents])
+        self.scores.append([agent.score for agent in self.agents])
+        self.distances.append([agent.distance for agent in self.agents])
+        self.n_penalites.append([agent.n_penalites for agent in self.agents])
+
+    def lancer_simulation(self, N_iterations):
+        fig, (ax1, ax2, ax3) = plt.subplots(3, figsize=(8, 16), sharex=True)
+        ax3t = ax3.twinx()
+
+        for i in tqdm(range(1, N_iterations + 1)):
+            algo.iterer()
+
+        ax1.scatter(
+            algo.iterations,
+            algo.n_penalites,
+            c="black",
+            marker=".",
+            alpha=0.4,
+        )
+        ax1.set_ylim([0, None])
+        ax1.set_ylabel("N pénalités")
+
+        ax2.scatter(
+            algo.iterations,
+            algo.scores,
+            c="black",
+            marker=".",
+            alpha=0.05,
+        )
+        ax2.set_ylabel("Scores")
+        ax2.set_yscale(("log"))
+
+        ax3.plot([min(score) for score in algo.scores], c="red")
+        ax3.set_ylabel("Meilleur score")
+        ax3.set_xlabel("Itération")
+
+        ax3t.plot([min(distance) for distance in algo.distances], c="black", ls="--")
+        ax3t.set_ylabel("Meilleure distance")
+
+        fig.tight_layout()
+        plt.show()
+
 
 instance = charger_instance("data/inst2")
 dist_mat = compute_dist_mat(instance)
 
 N_agents = 70
 
-ratio_parents = 0.3
-ratio_meilleurs_scores_parents = 0.2
-ratio_meilleurs_penalites_parents = 0.1
-ratio_meilleurs_scores_enfants = 0.2
-ratio_meilleurs_penalites_enfants = 0.1
-
-n_parents = int(N_agents * ratio_parents)
-n_enfants = N_agents - n_parents
-
 continuer = False
 if not continuer:
-    agents = [Agent(instance, dist_mat) for i in range(N_agents)]
+    algo = Algorithme(instance, dist_mat, N_agents)
 
-    iterations = [[agent.iteration for agent in agents]]
-    scores = [[agent.score for agent in agents]]
-    distances = [[agent.distance for agent in agents]]
-    n_penalites = [[agent.n_penalites for agent in agents]]
-
-ax1.scatter(
-    [agent.iteration for agent in agents],
-    [agent.n_penalites for agent in agents],
-    c="black",
-    marker=".",
-    alpha=0.4,
-)
-ax2.scatter(
-    [agent.iteration for agent in agents],
-    [agent.score for agent in agents],
-    c="black",
-    marker=".",
-    alpha=0.05,
-)
-
-N_iteration = 4000
-tqdm_range = tqdm(range(1, N_iteration))
-for i in tqdm_range:
-    parents = [agent.copier().iterer() for agent in agents]
-    enfants = [agent.muter() for agent in agents]
-
-    parents_selectionnes = selectionner_tranche(
-        parents,
-        n_parents,
-        ratio_meilleurs_scores_parents,
-        ratio_meilleurs_penalites_parents,
-    )
-    enfants_selectionnes = selectionner_tranche(
-        enfants,
-        n_enfants,
-        ratio_meilleurs_scores_enfants,
-        ratio_meilleurs_penalites_enfants,
-    )
-
-    agents = parents_selectionnes + enfants_selectionnes
-    assert len(agents) == N_agents
-
-    iterations.append([agent.iteration for agent in agents])
-    scores.append([agent.score for agent in agents])
-    distances.append([agent.distance for agent in agents])
-    n_penalites.append([agent.n_penalites for agent in agents])
-
-ax1.scatter(
-    iterations,
-    n_penalites,
-    c="black",
-    marker=".",
-    alpha=0.4,
-)
-ax1.set_ylim([0, None])
-ax1.set_ylabel("N pénalités")
-
-ax2.scatter(
-    iterations,
-    scores,
-    c="black",
-    marker=".",
-    alpha=0.05,
-)
-ax2.set_ylabel("Scores")
-ax2.set_yscale(("log"))
-
-ax3.plot([min(score) for score in scores], c="red")
-ax3.set_ylabel("Meilleur score")
-ax3.set_xlabel("Itération")
-ax3t = ax3.twinx()
-ax3t.plot([min(distance) for distance in distances], c="black", ls="--")
-ax3t.set_ylabel("Meilleure distance")
-
-fig.tight_layout()
-
+N_batches = 10
+N_iterations_par_batch = 400
+for batch in range(N_batches):
+    algo.lancer_simulation(N_iterations_par_batch)
 
 # %%
 
