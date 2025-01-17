@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import math
 import copy
 from tqdm import tqdm
+from time import time
 
 from utilitaires import *
 
@@ -179,6 +180,8 @@ class Algorithme:
     ):
         self.instance = instance
         self.dist_mat = dist_mat
+        self.start_time = time()
+        self.total_time = 0
 
         self.N_agents = N_agents
 
@@ -224,9 +227,11 @@ class Algorithme:
         self.n_penalites.append([agent.n_penalites for agent in self.agents])
 
     def lancer_simulation(self, N_iterations):
+        self.start_time = time()
         for i in tqdm(range(1, N_iterations + 1)):
             algo.iterer()
-
+        self.total_time += time() - self.start_time
+        self.start_time = time() - self.start_time #pas une bonne pratique mais flemme d'ajouter un attribut
         self.afficher_simulation()
 
     def afficher_simulation(self):
@@ -274,20 +279,22 @@ N_agents = 70
 continuer = False
 if not continuer:
     algo = Algorithme(instance, dist_mat, N_agents, 
-                      p_mutation=0.8, 
+                      p_mutation=0.4, 
                       p_mutation_echange=0.5, 
                       ratio_parents=0.3, 
                       ratio_meilleurs_scores_parents=0.2, 
                       ratio_meilleurs_penalites_parents=0.1)
 
-N_batches = 10
+N_batches = 5
 N_iterations_par_batch = 400
 for batch in range(N_batches):
     algo.lancer_simulation(N_iterations_par_batch)
+    print(f"Batch time : {algo.start_time}")
+    print(f"Total simulation time : {algo.total_time} s")
 
 # %%
 #End
 
-meilleur_agent = sorted(agents, key=lambda agent: agent.score)[0]
+meilleur_agent = sorted(algo.agents, key=lambda agent: agent.score)[0]
 print(meilleur_agent.parcours)
 meilleur_agent.afficher_parcours()
