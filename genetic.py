@@ -135,11 +135,13 @@ class Agent:
         return self
 
     def muter(self):
-        if np.random.rand() < self.p_mutation:
+        i = 0 
+        while np.random.rand() < self.p_mutation and i < 10:
             if np.random.rand() < self.p_mutation_echange:
                 self.parcours = mutation_echange(self.parcours)
             else:
                 self.parcours = mutation_insertion(self.parcours)
+            i += 1
             self.reevaluer() #legere opti pour les faibles taux de mutation
         self.iterer()
         return self
@@ -279,7 +281,7 @@ N_agents = 100
 continuer = False
 if not continuer:
     algo = Algorithme(instance, dist_mat, N_agents, 
-                      p_mutation=0.5, 
+                      p_mutation=0.4, 
                       p_mutation_echange=0.5, 
                       ratio_parents=0.2, 
                       ratio_meilleurs_scores_parents=0.2, 

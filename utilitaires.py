@@ -57,7 +57,7 @@ def dist(instance, node1, node2):
     y1 = instance[node1]["y"]
     x2 = instance[node2]["x"]
     y2 = instance[node2]["y"]
-    return math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2))
+    return math.floor(math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2)))
 
 
 def compute_dist_mat(instance):
