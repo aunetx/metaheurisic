@@ -84,6 +84,7 @@ def evaluation(instance, dist_mat, parcours, g=lambda x: 0):
     """
     distance = 0
     penalite = 0
+    n_penalites = 0
     t = 0
     for i in range(len(parcours)):
         # on revient au départ à la fin
@@ -99,5 +100,7 @@ def evaluation(instance, dist_mat, parcours, g=lambda x: 0):
         if t > end_window:
             erreur = t - end_window
             penalite += g(erreur)
+            n_penalites += 1
 
-    return distance + penalite
+    return distance if n_penalites == 0 else np.inf, distance + penalite, n_penalites
+
