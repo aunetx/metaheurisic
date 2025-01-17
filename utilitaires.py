@@ -48,26 +48,33 @@ def charger_solution(sol_name):
     return sol_list, sol_val
 
 
-def dist(instance, node1, node2):
+def dist(instance, node1, node2, distances_flottantes):
     """
     La distance géométique entre deux villes. N'est pas la distance topologique !
-    (ne prend pas en compte l'inégalité triangulaire)
+    (ne prend pas en compte l'inégalité triangulaire).
+    Si concours est True, alors les distances sont tronquées à l'entier inférieur,
+    comme dans scoreEtudiant.py.
     """
     x1 = instance[node1]["x"]
     y1 = instance[node1]["y"]
     x2 = instance[node2]["x"]
     y2 = instance[node2]["y"]
-    return math.floor(math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2)))
+    if distances_flottantes:
+        return math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2))
+    else:
+        return math.floor(math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2)))
 
 
-def compute_dist_mat(instance):
+def compute_dist_mat(instance, distances_flottantes=False):
     """
     La matrice des distances topologiques entre deux villes, donnée en flottant.
+    Si concours est True, alors les distances sont tronquées à l'entier inférieur,
+    comme dans scoreEtudiant.py.
     """
     mat_dist = np.zeros((len(instance) + 1, len(instance) + 1))
     for i in instance:
         for j in instance:
-            mat_dist[i, j] = dist(instance, i, j)
+            mat_dist[i, j] = dist(instance, i, j, distances_flottantes=distances_flottantes)
 
     for i in instance:
         for j in instance:
@@ -103,4 +110,3 @@ def evaluation(instance, dist_mat, parcours, g=lambda x: 0):
             n_penalites += 1
 
     return distance if n_penalites == 0 else np.inf, distance + penalite, n_penalites
-
