@@ -274,14 +274,14 @@ class Algorithme:
 instance = charger_instance("data/inst2")
 dist_mat = compute_dist_mat(instance)
 
-N_agents = 70
+N_agents = 100
 
 continuer = False
 if not continuer:
     algo = Algorithme(instance, dist_mat, N_agents, 
-                      p_mutation=0.4, 
+                      p_mutation=0.5, 
                       p_mutation_echange=0.5, 
-                      ratio_parents=0.3, 
+                      ratio_parents=0.2, 
                       ratio_meilleurs_scores_parents=0.2, 
                       ratio_meilleurs_penalites_parents=0.1)
 
@@ -289,12 +289,14 @@ N_batches = 5
 N_iterations_par_batch = 400
 for batch in range(N_batches):
     algo.lancer_simulation(N_iterations_par_batch)
-    print(f"Batch time : {algo.start_time}")
-    print(f"Total simulation time : {algo.total_time} s")
+    print(f"Batch time : {algo.start_time:.2f}")
+    print(f"Total simulation time : {algo.total_time:.2f} s")
 
 # %%
 #End
 
 meilleur_agent = sorted(algo.agents, key=lambda agent: agent.score)[0]
+print("meilleur score : ", meilleur_agent.score)
 print(meilleur_agent.parcours)
 meilleur_agent.afficher_parcours()
+# %%
