@@ -102,15 +102,21 @@ def selectionner_tranche(agents, n_agents, ratio_meilleurs_scores, ratio_meilleu
 class Agent:
     score = 0
     distance = 0
-    p_mutation = 0.8
+    p_mutation = 0.4
+    p_mutation_0=0,
+    p_mutation_f=0.8,
     p_mutation_echange = 0.5
     iteration = 0
+    iter_mutation_max = 1
 
-    def __init__(self, instance, dist_mat, parcours=None, p_mutation=0.8, p_mutation_echange=0.5):
+
+    def __init__(self, instance, dist_mat, parcours=None, p_mutation_0=0,p_mutation_f=0.8,iter_mutation_max = 2000, p_mutation_echange=0.5):
         self.instance = instance
         self.dist_mat = dist_mat
-        self.p_mutation = p_mutation
+        self.p_mutation_0 = p_mutation_0
+        self.p_mutation_f = p_mutation_f
         self.p_mutation_echange = p_mutation_echange
+        self.iter_mutation_max = iter_mutation_max
 
         if parcours:
             self.parcours = parcours
@@ -125,6 +131,7 @@ class Agent:
 
     def iterer(self):
         self.iteration += 1
+        self.p_mutation = (self.p_mutation_f-self.p_mutation_0)*min((self.iteration/self.iter_mutation_max),1) + self.p_mutation_0
         return self
 
     def reevaluer(self):
@@ -135,6 +142,7 @@ class Agent:
         return self
 
     def muter(self):
+        self.iterer()
         i = 0 
         while np.random.rand() < self.p_mutation and i < 10:
             if np.random.rand() < self.p_mutation_echange:
@@ -143,7 +151,6 @@ class Agent:
                 self.parcours = mutation_insertion(self.parcours)
             i += 1
             self.reevaluer() #legere opti pour les faibles taux de mutation
-        self.iterer()
         return self
 
     def afficher_parcours(self):
@@ -174,7 +181,9 @@ class Algorithme:
         instance,
         dist_mat,
         N_agents,
-        p_mutation=0.8,
+        p_mutation_0=0,
+        p_mutation_f=0.8,
+        iter_mutation_max = 1,
         p_mutation_echange=0.5,
         ratio_parents=0.3,
         ratio_meilleurs_scores_parents=0.2,
@@ -195,7 +204,7 @@ class Algorithme:
         self.n_enfants = self.N_agents - self.n_parents
 
         self.agents = [
-            Agent(instance, dist_mat, p_mutation=p_mutation, p_mutation_echange=p_mutation_echange)
+            Agent(instance, dist_mat, p_mutation_0=p_mutation_0, p_mutation_f=p_mutation_f,iter_mutation_max=iter_mutation_max, p_mutation_echange=p_mutation_echange)
             for i in range(N_agents)
         ]
 
@@ -275,30 +284,68 @@ class Algorithme:
 
 instance = charger_instance("data/inst2")
 dist_mat = compute_dist_mat(instance)
+save_file = "best_scores.txt"
 
-N_agents = 100
+N_agents = 50
 
 continuer = False
 if not continuer:
     algo = Algorithme(instance, dist_mat, N_agents, 
-                      p_mutation=0.4, 
+                      p_mutation_0=0.2, 
+                      p_mutation_f=0.6,
+                      iter_mutation_max=2000,
                       p_mutation_echange=0.5, 
                       ratio_parents=0.2, 
-                      ratio_meilleurs_scores_parents=0.2, 
+                      ratio_meilleurs_scores_parents=0.1, 
                       ratio_meilleurs_penalites_parents=0.1)
-
-N_batches = 5
+    with open(save_file,'a') as file:
+        file.write("\n ")
+    print("New simulation")
+    
+N_batches = 6
 N_iterations_par_batch = 400
 for batch in range(N_batches):
     algo.lancer_simulation(N_iterations_par_batch)
+    print(f"Batch {batch + 1} / {N_batches}")
     print(f"Batch time : {algo.start_time:.2f}")
     print(f"Total simulation time : {algo.total_time:.2f} s")
+    print(f"current mutation rate : {algo.agents[0].p_mutation}")
+
+with open(save_file,'r') as file:
+    lines = file.readlines()
+with open(save_file,'w') as file:    
+    file.writelines(lines[:-1])
+    file.write(str([int(min(score)) for score in algo.scores])[1:-1])
+    
 
 # %%
 #End
 
 meilleur_agent = sorted(algo.agents, key=lambda agent: agent.score)[0]
-print("meilleur score : ", meilleur_agent.score)
+print("meilleur score : ", int(meilleur_agent.score))
 print(meilleur_agent.parcours)
 meilleur_agent.afficher_parcours()
 # %%
+
+# %%
+# Plot a score file
+
+file_name = "best_scores.txt"
+with open(file_name,'r') as file:
+    lines = file.readlines()
+scores = [[int(score) for score in line.split(",")] for line in lines]
+
+# Assuming 'scores' is already defined as a list of lists
+scores_array = np.array(scores)
+
+# Calculate the mean and standard deviation for each column
+means = np.mean(scores_array, axis=0)
+std_devs = np.std(scores_array, axis=0)
+
+# Plot the data with error bars
+fig, ax = plt.subplots(figsize=(8,10))
+ax.errorbar(range(len(means)), means, yerr=std_devs, fmt='.', capsize=5, capthick=2, ecolor='red')
+ax.set_xlabel('Index')
+ax.set_ylabel('Score')
+ax.set_title('Scores with Error Bars')
+plt.show()
