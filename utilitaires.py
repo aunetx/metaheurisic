@@ -110,3 +110,14 @@ def evaluation(instance, dist_mat, parcours, g=lambda x: 0):
             n_penalites += 1
 
     return distance if n_penalites == 0 else np.inf, distance + penalite, n_penalites
+
+
+def sauvegarder_resultats(save_file, scores):
+    with open(save_file, "a") as file:
+        file.write(",".join([str(min(score)) for score in scores]) + "\n")
+
+
+def lire_resultats(save_file):
+    with open(save_file, "r") as file:
+        lines = file.readlines()
+    return [[float(score) for score in line.split(",")] for line in lines]
