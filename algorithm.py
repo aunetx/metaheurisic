@@ -271,15 +271,23 @@ class Algorithme:
         self.distances.append([agent.distance for agent in self.agents])
         self.n_penalites.append([agent.n_penalites for agent in self.agents])
 
-    def lancer_simulation(self, N_iterations):
+    def lancer_simulation(self, N_iterations, afficher_progression=True):
         self.start_time = time()
-        for i in tqdm(range(1, N_iterations + 1)):
+
+        if afficher_progression:
+            iterations = tqdm(range(1, N_iterations + 1))
+        else:
+            iterations = range(1, N_iterations + 1)
+        for _ in iterations:
             self.iterer()
+
         self.total_time += time() - self.start_time
         self.start_time = (
             time() - self.start_time
         )  # pas une bonne pratique mais flemme d'ajouter un attribut
-        self.afficher_simulation()
+
+        if afficher_progression:
+            self.afficher_simulation()
 
     def afficher_simulation(self):
         fig, (ax1, ax2) = plt.subplots(2, figsize=(7, 8), sharex=True)
