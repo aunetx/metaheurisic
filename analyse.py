@@ -20,33 +20,42 @@ def afficher_score_et_deviation(ax, data):
         x, est - sd, est + sd, alpha=0.3, label="déviation standard", color="olivedrab", lw=0
     )
     ax.plot(x, est, label="moyenne", c="black")
+    ax.set_xlim((0, len(x)))
     ax.legend()
-    ax.margins(x=0)
 
 
-instance_name = "inst1"
-save_name = f"{instance_name}_sans_hybridation"
+instance_name = "inst2"
+save_name = f"{instance_name}_sans_hybridation_70A"
 save_file_scores = f"best_scores/{save_name}_scores.txt"
 save_file_distances = f"best_scores/{save_name}_distances.txt"
 
 scores_array = np.array(lire_resultats(save_file_scores))
+distances_array = np.array(lire_resultats(save_file_distances))
 
-# Plot the data with error bars
-fig, ax = plt.subplots(figsize=(7, 7))
-afficher_score_et_deviation(ax, scores_array)
-ax.set_xlabel("Itération")
-ax.set_ylabel("Score")
-ax.set_title("Score avec barres d'erreurs")
-fig.tight_layout()
-plt.show()
+plot_separes = False
+if plot_separes:
+    for arr, name in zip([scores_array, distances_array], ["Score", "Distance"]):
+        fig, ax = plt.subplots(figsize=(7, 5))
 
-scores_array = np.array(lire_resultats(save_file_distances))
+        afficher_score_et_deviation(ax, arr)
+        ax.set_xlabel("Itération")
+        ax.set_ylabel(name)
+        ax.set_title(f"{name} avec barres d'erreurs")
 
-# Plot the data with error bars
-fig, ax = plt.subplots(figsize=(7, 7))
-afficher_score_et_deviation(ax, scores_array)
-ax.set_xlabel("Itération")
-ax.set_ylabel("Distance")
-ax.set_title("Distance avec barres d'erreurs")
-fig.tight_layout()
-plt.show()
+        fig.tight_layout()
+        plt.show()
+else:
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4))
+
+    afficher_score_et_deviation(ax1, scores_array)
+    ax1.set_xlabel("Itération")
+    ax1.set_ylabel("Score")
+    ax1.set_title("Score avec barres d'erreurs")
+
+    afficher_score_et_deviation(ax2, distances_array)
+    ax2.set_xlabel("Itération")
+    ax2.set_ylabel("Distance")
+    ax2.set_title("Distance avec barres d'erreurs")
+
+    fig.tight_layout()
+    plt.show()
