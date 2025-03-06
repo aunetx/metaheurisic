@@ -249,8 +249,9 @@ class Algorithme:
 
         if self.utiliser_hybridation:
             piscine_enfants = []
+            parents_possibles = [agent.copier() for agent in self.agents]
             for _ in range(self.N_agents):
-                parent1, parent2 = np.random.choice(parents_selectionnes, size=2, replace=False)
+                parent1, parent2 = np.random.choice(parents_possibles, size=2, replace=False)
                 piscine_enfants.append(enfanter(parent1, parent2).muter())
         else:
             piscine_enfants = [agent.copier().muter() for agent in self.agents]
