@@ -10,10 +10,10 @@ from algorithm import *
 
 # %%
 
-instance_name = "inst1"
+instance_name = "inst3"
 instance = charger_instance(f"data/{instance_name}")
 dist_mat = compute_dist_mat(instance)
-save_name = f"TEST_{instance_name}_sans_hybridation_70A"
+save_name = f"{instance_name}_sans_hybridation_70A"
 save_file_scores = f"best_scores/{save_name}_scores.txt"
 save_file_distances = f"best_scores/{save_name}_distances.txt"
 
@@ -22,7 +22,7 @@ DISTANCES_FILE_LOCK = multiprocessing.Lock()
 
 N_agents = 70
 N_batches = 10
-N_iterations_par_batch = 50
+N_iterations_par_batch = 5000
 N_runs = 10
 
 
