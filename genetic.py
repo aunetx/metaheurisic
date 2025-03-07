@@ -10,16 +10,18 @@ from algorithm import *
 
 # %%
 
-instance_name = "inst1"
+instance_name = "inst3"
 instance = charger_instance(f"data/{instance_name}")
 dist_mat = compute_dist_mat(instance)
 SCORES_FILE_LOCK = multiprocessing.Lock()
 DISTANCES_FILE_LOCK = multiprocessing.Lock()
 
-N_agents = 50
+N_agents = 70
 N_batches = 10
-N_iterations_par_batch = 50
-N_runs = 50
+N_iterations_par_batch = 5000
+N_runs = 10
+
+# instance concours 1371 sec/it
 
 save_name = f"{instance_name}_avec_hybridation_{N_agents}A"
 save_file_scores = f"best_scores/{save_name}_scores.txt"
@@ -79,7 +81,8 @@ else:
 
 # %%
 
-meilleur_agent = sorted(algo_list[3].agents, key=lambda agent: agent.score)[0]
-print(f"meilleur score : {int(meilleur_agent.score)}")
-print(meilleur_agent.parcours)
-meilleur_agent.afficher_parcours()
+for algo in algo_list:
+    meilleur_agent = sorted(algo.agents, key=lambda agent: agent.score)[0]
+    print(f"meilleur score : {int(meilleur_agent.score)}")
+    print(meilleur_agent.parcours)
+    meilleur_agent.afficher_parcours()

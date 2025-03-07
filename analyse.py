@@ -39,8 +39,8 @@ def afficher_score_et_deviation(ax, data, N_agents):
     ax.legend()
 
 
-instance_name = "inst1"
-N_agents = 50
+instance_name = "inst_concours"
+N_agents = 70
 save_name = f"{instance_name}_avec_hybridation_{N_agents}A"
 save_file_scores = f"best_scores/{save_name}_scores.txt"
 save_file_distances = f"best_scores/{save_name}_distances.txt"
